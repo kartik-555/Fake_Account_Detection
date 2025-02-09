@@ -30,14 +30,18 @@ def login_instagram():
     
 
 # Function to search and collect data
-def search_and_collect_data(query):
+def search_and_collect_data(driver, query):
     print("searching for: ", query)
     time.sleep(5)
+    
+    # Click on the search icon
     search_icon = WebDriverWait(driver, 10).until(
         EC.presence_of_element_located((By.CSS_SELECTOR, "svg[aria-label='Search']"))
     )
     search_icon.click()
     time.sleep(5)
+    
+    # Enter the query in the search box
     searchbox = WebDriverWait(driver, 10).until(
         EC.presence_of_element_located((By.CSS_SELECTOR, "input[placeholder='Search']"))
     )
@@ -48,15 +52,21 @@ def search_and_collect_data(query):
     time.sleep(5)
     searchbox.send_keys(Keys.ENTER)
     time.sleep(5)
+    
     # Locate the specific div and collect profile links within it
     search_results_div = driver.find_element(By.CSS_SELECTOR, "div.x6s0dn4.x78zum5.xdt5ytf.x5yr21d.x1odjw0f.x1n2onr6.xh8yej3")
     profile_links = search_results_div.find_elements(By.CSS_SELECTOR, "a.x1i10hfl")
-    profile_urls = list(set([link.get_attribute('href') for link in profile_links]))   
-
+    
+    # Use a set to collect unique profile URLs
+    profile_urls = set(link.get_attribute('href') for link in profile_links)
+    
+    profile_urls = [url for url in profile_urls if not url.endswith('?next=%2F')]
+    # Convert the set back to a list
+    profile_urls = list(profile_urls)
     return profile_urls
 
 # Function to collect profile data
-def collect_profile_data(profile_url):
+def collect_profile_data(driver, profile_url):
     driver.get(profile_url)
     time.sleep(5)
     
@@ -71,45 +81,53 @@ def collect_profile_data(profile_url):
     if is_private:
         try:
             posts = WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, "ul.x78zum5.x1q0g3np.xieb3on li:nth-child(1) span.html-span.xdj266r.x11i5rnm.xat24cr.x1mh8g0r.xexx8yu.x4uap5.x18d9i69.xkhd6sd.x1hl2dhg.x16tdsg8.x1vvkbs"))
+                EC.presence_of_element_located((By.CSS_SELECTOR, "ul.x78zum5.x1q0g3np.xieb3on li:nth-child(1) span.html-span"))
             ).text
         except:
             posts = None
 
         try:
             followers = WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, "ul.x78zum5.x1q0g3np.xieb3on li:nth-child(2) span.html-span.xdj266r.x11i5rnm.xat24cr.x1mh8g0r.xexx8yu.x4uap5.x18d9i69.xkhd6sd.x1hl2dhg.x16tdsg8.x1vvkbs"))
+                EC.presence_of_element_located((By.CSS_SELECTOR, "ul.x78zum5.x1q0g3np.xieb3on li:nth-child(2) span.html-span"))
             ).text
         except:
             followers = None
 
         try:
             following = WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, "ul.x78zum5.x1q0g3np.xieb3on li:nth-child(3) span.html-span.xdj266r.x11i5rnm.xat24cr.x1mh8g0r.xexx8yu.x4uap5.x18d9i69.xkhd6sd.x1hl2dhg.x16tdsg8.x1vvkbs"))
+                EC.presence_of_element_located((By.CSS_SELECTOR, "ul.x78zum5.x1q0g3np.xieb3on li:nth-child(3) span.html-span"))
             ).text
         except:
             following = None
     else:
         try:
             posts = WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, "span.html-span.xdj266r.x11i5rnm.xat24cr.x1mh8g0r.xexx8yu.x4uap5.x18d9i69.xkhd6sd.x1hl2dhg.x16tdsg8.x1vvkbs"))
+                EC.presence_of_element_located((By.CSS_SELECTOR, "ul.x78zum5.x1q0g3np.xieb3on li:nth-child(1) span.html-span"))
             ).text
         except:
             posts = None
 
         try:
             followers = WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, "a[href$='/followers/'] span.html-span.xdj266r.x11i5rnm.xat24cr.x1mh8g0r.xexx8yu.x4uap5.x18d9i69.xkhd6sd.x1hl2dhg.x16tdsg8.x1vvkbs"))
+                EC.presence_of_element_located((By.CSS_SELECTOR, "ul.x78zum5.x1q0g3np.xieb3on li:nth-child(2) span.html-span"))
             ).text
         except:
             followers = None
 
         try:
             following = WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, "a[href$='/following/'] span.html-span.xdj266r.x11i5rnm.xat24cr.x1mh8g0r.xexx8yu.x4uap5.x18d9i69.xkhd6sd.x1hl2dhg.x16tdsg8.x1vvkbs"))
+                EC.presence_of_element_located((By.CSS_SELECTOR, "ul.x78zum5.x1q0g3np.xieb3on li:nth-child(3) span.html-span"))
             ).text
         except:
             following = None
+            
+    try:
+        verified_element = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, "svg[aria-label='Verified']"))
+        )
+        verified = 1  # Verified
+    except:
+        verified = 0  # Not Verified
 
     # Save profile picture
     try:
@@ -132,7 +150,7 @@ def collect_profile_data(profile_url):
         ).text
     except:
         name = None
-    
+        
     # Click on the "Options" button
     try:
         options_button = WebDriverWait(driver, 10).until(
@@ -181,7 +199,8 @@ def collect_profile_data(profile_url):
         'following': following,
         'PVT': is_private,
         'date_joined': date_joined,
-        'former_usernames': former_usernames
+        'former_usernames': former_usernames,
+        'verified': verified
     }
 
 # Login to Instagram
@@ -193,7 +212,7 @@ os.makedirs('Data/profiles', exist_ok=True)
 # Initialize CSV file
 csv_file = os.path.join('Data', 'instagram_data.csv')
 if not os.path.exists(csv_file):
-    df = pd.DataFrame(columns=['user_id', 'name', 'posts', 'followers', 'following', 'PVT', 'date_joined', 'former_usernames'])
+    df = pd.DataFrame(columns=['user_id', 'name', 'posts', 'followers', 'following', 'PVT', 'date_joined', 'former_usernames','verified'])
     df.to_csv(csv_file, index=False)
 
 # Read names from names.txt
@@ -202,9 +221,9 @@ with open('names.txt', 'r') as file:
 
 # Search and collect data for each name
 for name in names:
-    profile_urls = search_and_collect_data(name)
+    profile_urls = search_and_collect_data(driver,name)
     for profile_url in profile_urls:
-        profile_data = collect_profile_data(profile_url)
+        profile_data = collect_profile_data(driver,profile_url)
         
         # Append new data to CSV file
         df = pd.DataFrame([profile_data])
