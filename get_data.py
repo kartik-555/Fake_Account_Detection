@@ -23,8 +23,8 @@ def login_instagram():
     password = driver.find_element(By.CSS_SELECTOR, "input[name='password']")
     username.clear()
     password.clear()
-    username.send_keys("1kartik_pvt")
-    password.send_keys("Kartik#15")
+    username.send_keys("xxxxx")
+    password.send_keys("xxxxx")
     login = driver.find_element(By.CSS_SELECTOR, "button[type='submit']").click()
     time.sleep(10)
     
